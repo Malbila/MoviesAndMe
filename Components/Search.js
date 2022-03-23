@@ -1,9 +1,11 @@
 // Components/Search.js
 
 import React from 'react'
-import { StyleSheet, View, TextInput, Button, FlatList, ActivityIndicator } from 'react-native'
+import { StyleSheet, View, TextInput, Text, Button, FlatList, ActivityIndicator } from 'react-native'
 import FilmItem from './FilmItem'
 import { getFilmsFromApiWithSearchedText } from '../API/TMDBApi'
+import FilmList from './FilmList'
+
 
 class Search extends React.Component {
 
@@ -16,6 +18,7 @@ class Search extends React.Component {
       films : [] ,
       isLoading: false
     }
+    this._loadFilms = this._loadFilms.bind(this)
   }
 
   _searchedTextInputChanged(text) {
@@ -29,7 +32,7 @@ class Search extends React.Component {
         this.page = data.page
         this.totalPages = data.total_pages
       this.setState({
-        films : data.results,//[ ...this.state.films, ...data.results ],
+        films : [ ...this.state.films, ...data.results ],
         isLoading: false
        })
       })
@@ -56,11 +59,6 @@ class Search extends React.Component {
     })
   }
 
-  _displayDetailForFilm = (idFilm) => {
-    console.log('Pressed '+idFilm)
-    this.props.navigation.navigate('FilmDetail', {idFilm: idFilm})
-  }
-
   render() {
     console.log("C'est moi j'appel")
     return (
@@ -72,17 +70,19 @@ class Search extends React.Component {
         onSubmitEditing={() => this._searchFilms()}
         />
         <Button title='Search' onPress={() => this._searchFilms()}/>
-        <FlatList
-          data={this.state.films}
-          keyExtractor={(item, index) => `${index}-${item.id.toString()}`}
-          renderItem={({item}) => <FilmItem film = {item} displayDetailForFilm={this._displayDetailForFilm} />}
-          onEndReachedThreshold={0.5}
-          onEndReached = {() => {
-            if(this.page < this.totalPages) {
-              this._loadFilms()
-              console.log('OnReached');
-            }
-          }}
+        { this.state.films.length !== 0 ? (
+          <Text style={styles.result}>Resultats</Text> 
+          ) : (
+            <Text style={styles.welcome}>Welcome to the MoviesAndMe app. Retrouvez vos films préférés !</Text>
+          )
+        }
+        <FilmList
+          films={this.state.films}
+          navigation={this.props.navigation}
+          loadFilms={this._loadFilms}
+          page={this.page}
+          totalPages={this.totalPages}
+          favoriteList={false}
         />
         { this._displayLoading() }
       </View>
@@ -93,6 +93,7 @@ class Search extends React.Component {
 const styles = StyleSheet.create({
   main_container: {
     flex: 1,
+    
   },
   textInput : {
     marginLeft: 5,
@@ -111,6 +112,18 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center'
+  },
+  result: {
+    textAlign: 'center',
+    fontSize: 30,
+    fontWeight: 'bold',
+    textDecorationLine: 'underline'
+  },
+  welcome: {
+    fontSize: 16,
+    margin: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
   }
 })
 
